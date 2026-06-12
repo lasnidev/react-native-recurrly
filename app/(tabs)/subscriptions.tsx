@@ -9,7 +9,8 @@ const Subscriptions = () => {
   return (
     <SafeAreaView className="flex-1 bg-background p-5">
       <Text>Subscriptions </Text>
-      <Image source={images.avatar} className="mx-auto my-auto" />
+      <Image source={images.avatar} className="mb-4" />
+      <Text>hfrirg freghth wegrfhghg dfgrprg rgrtggh</Text>
     </SafeAreaView>
   );
 };
