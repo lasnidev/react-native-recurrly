@@ -86,7 +86,7 @@
   }
 
   .home-add-icon {
-    @apply size-12;
+    @apply size-10;
   }
 
   .home-balance-card {
@@ -126,7 +126,7 @@
   }
 
   .upcoming-card {
-    @apply mr-4 w-44 rounded-2xl border border-black/10 bg-background p-4;
+    @apply mr-4 w-40 rounded-2xl border border-black/10 bg-background p-4;
   }
 
   .upcoming-row {
@@ -134,7 +134,7 @@
   }
 
   .upcoming-icon {
-    @apply size-14;
+    @apply size-10;
   }
 
   .upcoming-price {
@@ -166,7 +166,7 @@
   }
 
   .sub-icon {
-    @apply size-16 rounded-lg;
+    @apply size-14 rounded-lg;
   }
 
   .sub-copy {
