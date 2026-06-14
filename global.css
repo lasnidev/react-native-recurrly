@@ -322,7 +322,7 @@
   }
 
   .auth-button-text {
-    @apply text-base font-sans-bold text-background;
+    @apply text-base font-sans-bold text-foreground;
   }
 
   .auth-secondary-button {

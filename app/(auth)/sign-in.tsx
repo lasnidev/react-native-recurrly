@@ -17,6 +17,34 @@ import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 const SafeAreaView = styled(RNSafeAreaView);
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+type MfaStrategy = "email_code" | "phone_code" | "totp_authenticator" | "backup_code";
+
+const mfaCopy: Record<MfaStrategy, { title: string; subtitle: string; label: string; placeholder: string }> = {
+  email_code: {
+    title: "Check your inbox",
+    subtitle: "Enter the code we sent to confirm it is really you.",
+    label: "Verification code",
+    placeholder: "Enter your code",
+  },
+  phone_code: {
+    title: "Check your phone",
+    subtitle: "Enter the code we sent to confirm it is really you.",
+    label: "SMS code",
+    placeholder: "Enter your code",
+  },
+  totp_authenticator: {
+    title: "Authenticator code",
+    subtitle: "Enter the code from your authenticator app to continue.",
+    label: "Authenticator code",
+    placeholder: "Enter your code",
+  },
+  backup_code: {
+    title: "Backup code",
+    subtitle: "Enter one of your saved backup codes to continue.",
+    label: "Backup code",
+    placeholder: "Enter your backup code",
+  },
+};
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (
@@ -42,6 +70,7 @@ export default function SignIn() {
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
   const [isMfaStep, setIsMfaStep] = useState(false);
+  const [mfaStrategy, setMfaStrategy] = useState<MfaStrategy>("email_code");
 
   const isSubmitting = fetchStatus === "fetching";
   const email = emailAddress.trim();
@@ -50,6 +79,7 @@ export default function SignIn() {
     () => email.length > 0 && password.length > 0 && !isSubmitting,
     [email, password, isSubmitting],
   );
+  const activeMfaCopy = mfaCopy[mfaStrategy];
 
   const validateCredentials = () => {
     const nextErrors: Record<string, string> = {};
@@ -81,6 +111,38 @@ export default function SignIn() {
     router.replace("/");
   };
 
+  const startMfaStep = async (strategies: MfaStrategy[]) => {
+    const nextStrategy = strategies.find((strategy) =>
+      signIn?.supportedSecondFactors.some((factor) => factor.strategy === strategy),
+    );
+
+    if (!nextStrategy || !signIn) {
+      setFormError("Use your configured second factor to continue.");
+      return false;
+    }
+
+    setMfaStrategy(nextStrategy);
+
+    if (nextStrategy === "email_code") {
+      const result = await signIn.mfa.sendEmailCode();
+      if (result.error) {
+        setFormError(getErrorMessage(result.error, "We could not send a verification code."));
+        return false;
+      }
+    }
+
+    if (nextStrategy === "phone_code") {
+      const result = await signIn.mfa.sendPhoneCode();
+      if (result.error) {
+        setFormError(getErrorMessage(result.error, "We could not send a verification code."));
+        return false;
+      }
+    }
+
+    setIsMfaStep(true);
+    return true;
+  };
+
   const handleSubmit = async () => {
     if (!signIn || !validateCredentials()) return;
 
@@ -100,19 +162,17 @@ export default function SignIn() {
       }
 
       if (signIn.status === "needs_client_trust") {
-        const emailCodeFactor = signIn.supportedSecondFactors.find(
-          (factor) => factor.strategy === "email_code",
-        );
-
-        if (emailCodeFactor) {
-          await signIn.mfa.sendEmailCode();
-          setIsMfaStep(true);
-          return;
-        }
+        await startMfaStep(["email_code"]);
+        return;
       }
 
       if (signIn.status === "needs_second_factor") {
-        setFormError("Use your second factor to continue.");
+        await startMfaStep([
+          "totp_authenticator",
+          "phone_code",
+          "backup_code",
+          "email_code",
+        ]);
         return;
       }
 
@@ -135,7 +195,14 @@ export default function SignIn() {
     setFormError("");
 
     try {
-      const result = await signIn.mfa.verifyEmailCode({ code: trimmedCode });
+      const result =
+        mfaStrategy === "phone_code"
+          ? await signIn.mfa.verifyPhoneCode({ code: trimmedCode })
+          : mfaStrategy === "totp_authenticator"
+            ? await signIn.mfa.verifyTOTP({ code: trimmedCode })
+            : mfaStrategy === "backup_code"
+              ? await signIn.mfa.verifyBackupCode({ code: trimmedCode })
+              : await signIn.mfa.verifyEmailCode({ code: trimmedCode });
 
       if (result.error) {
         setFormError(getErrorMessage(result.error, "That code did not work. Please try again."));
@@ -157,7 +224,16 @@ export default function SignIn() {
     if (!signIn) return;
 
     setFormError("");
-    const result = await signIn.mfa.sendEmailCode();
+    const result =
+      mfaStrategy === "phone_code"
+        ? await signIn.mfa.sendPhoneCode()
+        : mfaStrategy === "email_code"
+          ? await signIn.mfa.sendEmailCode()
+          : null;
+
+    if (!result) {
+      return;
+    }
 
     if (result.error) {
       setFormError(getErrorMessage(result.error, "We could not send a new code."));
@@ -167,6 +243,7 @@ export default function SignIn() {
   const resetFlow = async () => {
     await signIn?.reset();
     setIsMfaStep(false);
+    setMfaStrategy("email_code");
     setCode("");
     setFormError("");
     setLocalErrors({});
@@ -196,11 +273,11 @@ export default function SignIn() {
             </View>
 
             <Text className="auth-title">
-              {isMfaStep ? "Check your inbox" : "Welcome back"}
+              {isMfaStep ? activeMfaCopy.title : "Welcome back"}
             </Text>
             <Text className="auth-subtitle">
               {isMfaStep
-                ? "Enter the code we sent to confirm it is really you."
+                ? activeMfaCopy.subtitle
                 : "Sign in to continue managing your subscriptions."}
             </Text>
           </View>
@@ -209,16 +286,18 @@ export default function SignIn() {
             {isMfaStep ? (
               <View className="auth-form">
                 <View className="auth-field">
-                  <Text className="auth-label">Verification code</Text>
+                  <Text className="auth-label">{activeMfaCopy.label}</Text>
                   <TextInput
                     className={`auth-input ${localErrors.code || errors.fields.code ? "auth-input-error" : ""}`}
                     value={code}
                     onChangeText={setCode}
-                    placeholder="Enter your code"
+                    placeholder={activeMfaCopy.placeholder}
                     placeholderTextColor="rgba(0, 0, 0, 0.45)"
-                    keyboardType="number-pad"
+                    keyboardType={mfaStrategy === "backup_code" ? "default" : "number-pad"}
                     textContentType="oneTimeCode"
-                    maxLength={8}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    maxLength={mfaStrategy === "backup_code" ? 32 : 8}
                   />
                   {(localErrors.code || errors.fields.code?.message) && (
                     <Text className="auth-error">
@@ -241,9 +320,11 @@ export default function SignIn() {
                   )}
                 </Pressable>
 
-                <Pressable className="auth-secondary-button" onPress={handleResendCode}>
-                  <Text className="auth-secondary-button-text">Send a new code</Text>
-                </Pressable>
+                {(mfaStrategy === "email_code" || mfaStrategy === "phone_code") && (
+                  <Pressable className="auth-secondary-button" onPress={handleResendCode}>
+                    <Text className="auth-secondary-button-text">Send a new code</Text>
+                  </Pressable>
+                )}
                 <Pressable onPress={resetFlow}>
                   <Text className="auth-link text-center">Use a different email</Text>
                 </Pressable>
