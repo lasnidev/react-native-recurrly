@@ -90,7 +90,7 @@
   }
 
   .home-balance-card {
-    @apply my-2.5 min-h-50 justify-between gap-5 rounded-bl-4xl rounded-tr-4xl bg-accent p-6;
+    @apply my-2.5 min-h-36 justify-between gap-5 rounded-bl-4xl rounded-tr-4xl bg-accent p-6;
   }
 
   .home-balance-label {
@@ -322,7 +322,7 @@
   }
 
   .auth-button-text {
-    @apply text-base font-sans-bold text-background;
+    @apply text-base font-sans-bold text-foreground;
   }
 
   .auth-secondary-button {

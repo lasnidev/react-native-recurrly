@@ -25,8 +25,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
     "errors" in error &&
     Array.isArray((error as { errors?: unknown[] }).errors)
   ) {
-    const firstError = (error as { errors: { longMessage?: string; message?: string }[] })
-      .errors[0];
+    const firstError = (
+      error as { errors: { longMessage?: string; message?: string }[] }
+    ).errors[0];
     return firstError?.longMessage ?? firstError?.message ?? fallback;
   }
 
@@ -76,7 +77,12 @@ export default function SignUp() {
     });
 
     if (result?.error) {
-      setFormError(getErrorMessage(result.error, "We could not finish creating your account."));
+      setFormError(
+        getErrorMessage(
+          result.error,
+          "We could not finish creating your account.",
+        ),
+      );
       return;
     }
 
@@ -92,7 +98,12 @@ export default function SignUp() {
       const result = await signUp.password({ emailAddress: email, password });
 
       if (result.error) {
-        setFormError(getErrorMessage(result.error, "We could not create your account yet."));
+        setFormError(
+          getErrorMessage(
+            result.error,
+            "We could not create your account yet.",
+          ),
+        );
         return;
       }
 
@@ -105,10 +116,19 @@ export default function SignUp() {
         signUp.status === "missing_requirements" &&
         signUp.unverifiedFields.includes("email_address")
       ) {
+        if (signUp.unverifiedFields.length > 1) {
+          return;
+        }
+
         const emailResult = await signUp.verifications.sendEmailCode();
 
         if (emailResult.error) {
-          setFormError(getErrorMessage(emailResult.error, "We could not send a verification code."));
+          setFormError(
+            getErrorMessage(
+              emailResult.error,
+              "We could not send a verification code.",
+            ),
+          );
           return;
         }
 
@@ -116,9 +136,13 @@ export default function SignUp() {
         return;
       }
 
-      setFormError("We need a little more information before opening your account.");
+      setFormError(
+        "We need a little more information before opening your account.",
+      );
     } catch (error) {
-      setFormError(getErrorMessage(error, "Something went wrong. Please try again."));
+      setFormError(
+        getErrorMessage(error, "Something went wrong. Please try again."),
+      );
     }
   };
 
@@ -135,10 +159,17 @@ export default function SignUp() {
     setFormError("");
 
     try {
-      const result = await signUp.verifications.verifyEmailCode({ code: trimmedCode });
+      const result = await signUp.verifications.verifyEmailCode({
+        code: trimmedCode,
+      });
 
       if (result.error) {
-        setFormError(getErrorMessage(result.error, "That code did not work. Please try again."));
+        setFormError(
+          getErrorMessage(
+            result.error,
+            "That code did not work. Please try again.",
+          ),
+        );
         return;
       }
 
@@ -147,9 +178,13 @@ export default function SignUp() {
         return;
       }
 
-      setFormError("We could not verify that code yet. Please request a new one.");
+      setFormError(
+        "We could not verify that code yet. Please request a new one.",
+      );
     } catch (error) {
-      setFormError(getErrorMessage(error, "That code did not work. Please try again."));
+      setFormError(
+        getErrorMessage(error, "That code did not work. Please try again."),
+      );
     }
   };
 
@@ -160,7 +195,9 @@ export default function SignUp() {
     const result = await signUp.verifications.sendEmailCode();
 
     if (result.error) {
-      setFormError(getErrorMessage(result.error, "We could not send a new code."));
+      setFormError(
+        getErrorMessage(result.error, "We could not send a new code."),
+      );
     }
   };
 
@@ -227,7 +264,9 @@ export default function SignUp() {
                   )}
                 </View>
 
-                {formError ? <Text className="auth-error">{formError}</Text> : null}
+                {formError ? (
+                  <Text className="auth-error">{formError}</Text>
+                ) : null}
 
                 <Pressable
                   className={`auth-button ${isSubmitting ? "auth-button-disabled" : ""}`}
@@ -237,15 +276,24 @@ export default function SignUp() {
                   {isSubmitting ? (
                     <ActivityIndicator color="#081126" />
                   ) : (
-                    <Text className="auth-button-text">Verify and continue</Text>
+                    <Text className="auth-button-text">
+                      Verify and continue
+                    </Text>
                   )}
                 </Pressable>
 
-                <Pressable className="auth-secondary-button" onPress={handleResendCode}>
-                  <Text className="auth-secondary-button-text">Send a new code</Text>
+                <Pressable
+                  className="auth-secondary-button"
+                  onPress={handleResendCode}
+                >
+                  <Text className="auth-secondary-button-text">
+                    Send a new code
+                  </Text>
                 </Pressable>
                 <Pressable onPress={resetFlow}>
-                  <Text className="auth-link text-center">Use a different email</Text>
+                  <Text className="auth-link text-center">
+                    Use a different email
+                  </Text>
                 </Pressable>
               </View>
             ) : (
@@ -263,7 +311,8 @@ export default function SignUp() {
                     keyboardType="email-address"
                     textContentType="emailAddress"
                   />
-                  {(localErrors.email || errors.fields.emailAddress?.message) && (
+                  {(localErrors.email ||
+                    errors.fields.emailAddress?.message) && (
                     <Text className="auth-error">
                       {localErrors.email ?? errors.fields.emailAddress?.message}
                     </Text>
@@ -281,7 +330,8 @@ export default function SignUp() {
                     secureTextEntry
                     textContentType="newPassword"
                   />
-                  {(localErrors.password || errors.fields.password?.message) && (
+                  {(localErrors.password ||
+                    errors.fields.password?.message) && (
                     <Text className="auth-error">
                       {localErrors.password ?? errors.fields.password?.message}
                     </Text>
@@ -289,7 +339,9 @@ export default function SignUp() {
                   <Text className="auth-helper">Use 8 or more characters.</Text>
                 </View>
 
-                {formError ? <Text className="auth-error">{formError}</Text> : null}
+                {formError ? (
+                  <Text className="auth-error">{formError}</Text>
+                ) : null}
 
                 <Pressable
                   className={`auth-button ${!canSubmit ? "auth-button-disabled" : ""}`}
@@ -306,7 +358,9 @@ export default function SignUp() {
                 <View nativeID="clerk-captcha" />
 
                 <View className="auth-link-row">
-                  <Text className="auth-link-copy">Already have an account?</Text>
+                  <Text className="auth-link-copy">
+                    Already have an account?
+                  </Text>
                   <Link href="/sign-in" asChild>
                     <Pressable>
                       <Text className="auth-link">Sign in</Text>
