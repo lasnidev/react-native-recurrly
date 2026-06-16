@@ -3,14 +3,14 @@ import { Link, useRouter } from "expo-router";
 import { styled } from "nativewind";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView as RNSafeAreaView } from "react-native-safe-area-context";
 
@@ -117,6 +117,10 @@ export default function SignUp() {
         signUp.unverifiedFields.includes("email_address")
       ) {
         if (signUp.unverifiedFields.length > 1) {
+          setFormError(
+            "Please verify all required fields: " +
+              signUp.unverifiedFields.join(", "),
+          );
           return;
         }
 

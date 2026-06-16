@@ -362,11 +362,11 @@
   }
 
   .modal-container {
-    @apply mt-auto max-h-[85%] rounded-t-3xl bg-background;
+    @apply mt-auto max-h-[85%] overflow-hidden rounded-t-3xl bg-card;
   }
 
   .modal-header {
-    @apply flex-row items-center justify-between border-b border-border px-5 py-4;
+    @apply flex-row items-center justify-between border-b border-border bg-card px-5 py-4;
   }
 
   .modal-title {
@@ -382,7 +382,7 @@
   }
 
   .modal-body {
-    @apply gap-5 p-5;
+    @apply gap-5 bg-card p-5;
   }
 
   .picker-row {
@@ -390,7 +390,7 @@
   }
 
   .picker-option {
-    @apply flex-1 items-center rounded-2xl border border-border bg-background py-3;
+    @apply flex-1 items-center rounded-2xl border border-border bg-white py-3;
   }
 
   .picker-option-active {
@@ -410,7 +410,7 @@
   }
 
   .category-chip {
-    @apply rounded-full border border-border bg-background px-4 py-2;
+    @apply rounded-full border border-border bg-white px-4 py-2;
   }
 
   .category-chip-active {
@@ -423,5 +423,50 @@
 
   .category-chip-text-active {
     @apply text-accent;
+  }
+
+  /* Modal Sheet Styles */
+  .modal-sheet {
+    @apply flex-1 rounded-t-3xl bg-white overflow-hidden;
+  }
+
+  .modal-form-field {
+    @apply mb-3.5;
+  }
+
+  .modal-form-label {
+    @apply mb-2 text-sm font-sans-semibold text-primary;
+  }
+
+  .modal-form-input {
+    @apply rounded-3xl border border-border bg-white px-4 py-3 text-base text-primary font-sans-medium;
+  }
+
+  .modal-close-button {
+    @apply size-10 items-center justify-center rounded-full bg-muted;
+  }
+
+  .modal-close-icon {
+    @apply text-xl font-sans-bold text-primary;
+  }
+
+  .modal-form-error {
+    @apply text-xs font-sans-semibold text-destructive mb-2;
+  }
+
+  .modal-submit-button {
+    @apply mt-2 items-center rounded-3xl bg-accent py-3.5;
+  }
+
+  .modal-submit-button-disabled {
+    @apply bg-accent/45;
+  }
+
+  .modal-submit-text {
+    @apply text-base font-sans-bold text-white;
+  }
+
+  .modal-spacer {
+    @apply h-10;
   }
 }

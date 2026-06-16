@@ -1,18 +1,26 @@
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack } from "expo-router";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider } from "posthog-react-native";
 import { useEffect } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const posthogApiKey = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
+const posthogHost =
+  process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
 if (!publishableKey) {
   throw new Error("Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env");
 }
 
-SplashScreen.preventAutoHideAsync();
+const splashScreenRegistration = SplashScreen.preventAutoHideAsync()
+  .then(() => true)
+  .catch(() => false);
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -25,25 +33,43 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
+    if (!fontsLoaded) return;
+
+    void splashScreenRegistration.then((isRegistered) => {
+      if (!isRegistered) return;
+
+      try {
+        SplashScreen.hide();
+      } catch {
+        // Fast Refresh may run after the native splash screen has been removed.
+      }
+    });
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
-  return (
+  return posthogApiKey ? (
     <PostHogProvider
-      apiKey="phc_y8gYwtnmS3qKN3UifXJR5QVJsnUykd3CnbTFLcZHiyva"
+      apiKey={posthogApiKey}
       options={{
-        // usually 'https://us.i.posthog.com' or 'https://eu.i.posthog.com'
-
-        host: "https://us.i.posthog.com",
+        host: posthogHost,
       }}
     >
-      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
-        <Stack screenOptions={{ headerShown: false }} />
-      </ClerkProvider>
+      <SafeAreaProvider>
+        <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+          <SubscriptionProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+          </SubscriptionProvider>
+        </ClerkProvider>
+      </SafeAreaProvider>
     </PostHogProvider>
+  ) : (
+    <SafeAreaProvider>
+      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+        <SubscriptionProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </SubscriptionProvider>
+      </ClerkProvider>
+    </SafeAreaProvider>
   );
 }
